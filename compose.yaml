@@ -1,0 +1,11 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Containerfile.dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app:Z
+    environment:
+      - WATCHPACK_POLLING=true

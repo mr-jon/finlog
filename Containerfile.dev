@@ -1,0 +1,12 @@
+FROM node:20-alpine
+
+WORKDIR app/
+
+# Copiamos só os arquivos de dependência primeiro (cache de build mais eficiente)
+COPY package*.json ./
+RUN npm install
+
+# O código fonte vem via volume, não via COPY, no modo dev
+EXPOSE 3000
+
+CMD ["npm", "run", "dev"]
