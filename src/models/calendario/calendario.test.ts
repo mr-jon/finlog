@@ -17,6 +17,16 @@ describe("isFeriadoNacional", () => {
     // Páscoa 2026 = 5 de abril -> Sexta-feira Santa = 3 de abril
     expect(isFeriadoNacional(new Date(2026, 3, 3))).toBe(true);
   });
+
+  it("reconhece o Carnaval de 2026 como feriado", () => {
+    // Páscoa 2026 = 5 de abril -> Carnaval = 17 de fevereiro
+    expect(isFeriadoNacional(new Date(2026, 1, 17))).toBe(true);
+  });
+
+  it("reconhece o Corpus Christi de 2026 como feriado", () => {
+    // Páscoa 2026 = 5 de abril -> CorpusChristi = 4 de junho
+    expect(isFeriadoNacional(new Date(2026, 5, 4))).toBe(true);
+  });
 });
 
 describe("calcularPascoa", () => {
