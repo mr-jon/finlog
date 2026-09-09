@@ -8,4 +8,8 @@ describe("isFeriadoNacional", () => {
   it("reconhece um dia comum como não-feriado", () => {
     expect(isFeriadoNacional(new Date(2026, 0, 2))).toBe(false);
   });
+
+  it("reconhece o Natal como feriado", () => {
+    expect(isFeriadoNacional(new Date(2026, 11, 25))).toBe(true);
+  });
 });
