@@ -15,3 +15,35 @@ export function isFeriadoNacional(data: Date): boolean {
       feriado.mes === data.getMonth() && feriado.dia === data.getDate(),
   );
 }
+
+export function calcularPascoa(ano: number): Date {
+  const cicloLunarMetonico = ano % 19;
+  const seculo = Math.floor(ano / 100);
+  const anoDoSeculo = ano % 100;
+  const seculoBissexto = Math.floor(seculo / 4);
+  const seculoRestante = seculo % 4;
+  const correcaoLunar = Math.floor((seculo + 8) / 25);
+  const correcaoLunarAjustada = Math.floor((seculo - correcaoLunar + 1) / 3);
+  const epacta =
+    (19 * cicloLunarMetonico +
+      seculo -
+      seculoBissexto -
+      correcaoLunarAjustada +
+      15) %
+    30;
+  const anoBissextoDoSeculo = Math.floor(anoDoSeculo / 4);
+  const anoRestante = anoDoSeculo % 4;
+  const diasAteDomingo =
+    (32 + 2 * seculoRestante + 2 * anoBissextoDoSeculo - epacta - anoRestante) %
+    7;
+  const correcaoSecularMes = Math.floor(
+    (cicloLunarMetonico + 11 * epacta + 22 * diasAteDomingo) / 451,
+  );
+  const mes = Math.floor(
+    (epacta + diasAteDomingo - 7 * correcaoSecularMes + 114) / 31,
+  );
+  const dia =
+    ((epacta + diasAteDomingo - 7 * correcaoSecularMes + 114) % 31) + 1;
+
+  return new Date(ano, mes - 1, dia);
+}
