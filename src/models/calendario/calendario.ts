@@ -71,3 +71,13 @@ export function calcularPascoa(ano: number): Date {
 
   return new Date(ano, mes - 1, dia);
 }
+
+export function isDiaUtil(data: Date): boolean {
+  const diaDaSemana = data.getDay(); // 0 = domingo, 6 = sábado
+  const ehFimDeSemana = diaDaSemana === 0 || diaDaSemana === 6;
+
+  if (ehFimDeSemana) return false;
+  if (isFeriadoNacional(data)) return false;
+
+  return true;
+}

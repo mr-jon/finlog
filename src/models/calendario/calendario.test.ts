@@ -1,4 +1,4 @@
-import { isFeriadoNacional, calcularPascoa } from "./calendario";
+import { isFeriadoNacional, calcularPascoa, isDiaUtil } from "./calendario";
 
 describe("isFeriadoNacional", () => {
   it("reconhece o Ano Novo como feriado", () => {
@@ -40,5 +40,27 @@ describe("calcularPascoa", () => {
     const pascoa = calcularPascoa(2024);
     expect(pascoa.getMonth()).toBe(2); // março
     expect(pascoa.getDate()).toBe(31);
+  });
+});
+
+describe("isDiaUtil", () => {
+  it("considera um sábado como não-útil", () => {
+    // 3 de janeiro de 2026 é um sábado
+    expect(isDiaUtil(new Date(2026, 0, 4))).toBe(false);
+  });
+
+  it("considera um domingo como não-útil", () => {
+    // 4 de janeiro de 2026 é um domingo
+    expect(isDiaUtil(new Date(2026, 0, 4))).toBe(false);
+  });
+
+  it("considera um feriado nacional como não-útil", () => {
+    // 1º de janeiro de 2026 é feriado (Ano Novo)
+    expect(isDiaUtil(new Date(2026, 0, 1))).toBe(false);
+  });
+
+  it("considera uma segunda-feira comum como útil", () => {
+    // 5 de janeiro de 2026 é uma segunda-feira comum
+    expect(isDiaUtil(new Date(2026, 0, 5))).toBe(true);
   });
 });
