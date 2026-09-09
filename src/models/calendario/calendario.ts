@@ -9,10 +9,34 @@ const FERIADOS_FIXOS: Array<{ mes: number; dia: number }> = [
   { mes: 11, dia: 25 }, // Natal
 ];
 
+function adicionarDias(data: Date, dias: number): Date {
+  const resultado = new Date(data);
+  resultado.setDate(resultado.getDate() + dias);
+  return resultado;
+}
+
+function mesmaData(a: Date, b: Date): boolean {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
 export function isFeriadoNacional(data: Date): boolean {
-  return FERIADOS_FIXOS.some(
+  const ehFeriadoFixo = FERIADOS_FIXOS.some(
     (feriado) =>
       feriado.mes === data.getMonth() && feriado.dia === data.getDate(),
+  );
+  if (ehFeriadoFixo) return true;
+
+  const pascoa = calcularPascoa(data.getFullYear());
+  const sextaFeiraSanta = adicionarDias(pascoa, -2);
+  const carnaval = adicionarDias(pascoa, -47);
+  const corpusChristi = adicionarDias(pascoa, 60);
+
+  return [sextaFeiraSanta, carnaval, corpusChristi].some((feriado) =>
+    mesmaData(feriado, data),
   );
 }
 

@@ -12,6 +12,11 @@ describe("isFeriadoNacional", () => {
   it("reconhece o Natal como feriado", () => {
     expect(isFeriadoNacional(new Date(2026, 11, 25))).toBe(true);
   });
+
+  it("reconhece a Sexta-feira Santa de 2026 como feriado", () => {
+    // Páscoa 2026 = 5 de abril -> Sexta-feira Santa = 3 de abril
+    expect(isFeriadoNacional(new Date(2026, 3, 3))).toBe(true);
+  });
 });
 
 describe("calcularPascoa", () => {
