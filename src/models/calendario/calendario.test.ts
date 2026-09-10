@@ -1,4 +1,9 @@
-import { isFeriadoNacional, calcularPascoa, isDiaUtil } from "./calendario";
+import {
+  isFeriadoNacional,
+  calcularPascoa,
+  isDiaUtil,
+  proximoDiaUtil,
+} from "./calendario";
 
 describe("isFeriadoNacional", () => {
   it("reconhece o Ano Novo como feriado", () => {
@@ -62,5 +67,31 @@ describe("isDiaUtil", () => {
   it("considera uma segunda-feira comum como útil", () => {
     // 5 de janeiro de 2026 é uma segunda-feira comum
     expect(isDiaUtil(new Date(2026, 0, 5))).toBe(true);
+  });
+});
+
+describe("proximoDiaUtil", () => {
+  it("retorna a própria data se já for um dia útil", () => {
+    // 5 de janeiro de 2026 é uma segunda-feira comum
+    const resultado = proximoDiaUtil(new Date(2026, 0, 5));
+    expect(resultado.getDate()).toBe(5);
+    expect(resultado.getMonth()).toBe(0);
+  });
+
+  it("avança do sábado para a segunda-feira seguinte", () => {
+    // 3 de janeiro de 2026 é sábado -> deve retornar 5 de janeiro (segunda)
+    const resultado = proximoDiaUtil(new Date(2026, 0, 3));
+    expect(resultado.getDate()).toBe(5);
+    expect(resultado.getMonth()).toBe(0);
+  });
+
+  it("pula um feriado que cai numa sexta-feira", () => {
+    // Tiradentes 2026 (21 de abril) cai numa terça-feira
+    // então vamos testar um caso onde o 1º cai num feriado
+    // 1º de maio de 2026 é uma sexta-feira e é feriado (Dia do Trabalho)
+    // o próximo dia útil deve ser 4 de maio (segunda)
+    const resultado = proximoDiaUtil(new Date(2026, 4, 1));
+    expect(resultado.getDate()).toBe(4);
+    expect(resultado.getMonth()).toBe(4);
   });
 });

@@ -81,3 +81,13 @@ export function isDiaUtil(data: Date): boolean {
 
   return true;
 }
+
+export function proximoDiaUtil(data: Date): Date {
+  let candidato = new Date(data);
+
+  while (!isDiaUtil(candidato)) {
+    candidato = adicionarDias(candidato, 1);
+  }
+
+  return candidato;
+}
