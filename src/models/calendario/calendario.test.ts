@@ -3,6 +3,7 @@ import {
   calcularPascoa,
   isDiaUtil,
   proximoDiaUtil,
+  calcularDataPagamento,
 } from "./calendario";
 
 describe("isFeriadoNacional", () => {
@@ -93,5 +94,30 @@ describe("proximoDiaUtil", () => {
     const resultado = proximoDiaUtil(new Date(2026, 4, 1));
     expect(resultado.getDate()).toBe(4);
     expect(resultado.getMonth()).toBe(4);
+  });
+});
+
+describe("calcularDataPagamento", () => {
+  it("retorna o próprio dia configurado se ele já for útil", () => {
+    // dia 5 configurado, outubro de 2026 -> 5 de outubro é uma segunda-feira comum
+    const pagamento = calcularDataPagamento(2026, 9, 5);
+    expect(pagamento.getDate()).toBe(5);
+    expect(pagamento.getMonth()).toBe(9);
+  });
+
+  it("empurra o pagamento quando o dia configurado cai num sábado seguido de feriado", () => {
+    // dia 31 configurado, outubro de 2026:
+    // 31/out = sábado, 1/nov = domingo, 2/nov = feriado (Finados) -> pagamento cai em 3/nov
+    const pagamento = calcularDataPagamento(2026, 9, 31);
+    expect(pagamento.getDate()).toBe(3);
+    expect(pagamento.getMonth()).toBe(10);
+  });
+
+  it("usa o último dia do mês quando o dia configurado não existe", () => {
+    // dia 31 configurado, fevereiro de 2026 ( não é bissexto, só tem 28 dias)
+    // deve cair em 28/02/2026, que já é uma segunda-feira útil
+    const pagamento = calcularDataPagamento(2026, 1, 31);
+    expect(pagamento.getDate()).toBe(2);
+    expect(pagamento.getMonth()).toBe(2);
   });
 });

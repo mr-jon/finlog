@@ -91,3 +91,18 @@ export function proximoDiaUtil(data: Date): Date {
 
   return candidato;
 }
+
+function ultimoDiaDoMes(ano: number, mes: number): number {
+  return new Date(ano, mes + 1, 0).getDate();
+}
+
+export function calcularDataPagamento(
+  ano: number,
+  mes: number,
+  diaConfigurado: number,
+): Date {
+  const ultimoDia = ultimoDiaDoMes(ano, mes);
+  const diaAjustado = Math.min(diaConfigurado, ultimoDia);
+  const dataBase = new Date(ano, mes, diaAjustado);
+  return proximoDiaUtil(dataBase);
+}
