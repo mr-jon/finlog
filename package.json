@@ -9,7 +9,8 @@
     "lint": "eslint",
     "lint:check": "prettier --check .",
     "lint:fix": "prettier --write .",
-    "test": "jest"
+    "test": "jest",
+    "test:watch": "jest --watchAll"
   },
   "dependencies": {
     "next": "16.3.4",
