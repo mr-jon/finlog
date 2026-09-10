@@ -106,3 +106,27 @@ export function calcularDataPagamento(
   const dataBase = new Date(ano, mes, diaAjustado);
   return proximoDiaUtil(dataBase);
 }
+
+export function calcularPeriodoFinanceiro(
+  ano: number,
+  mes: number,
+  diaConfigurado: number,
+): { inicio: Date; fim: Date; totalDias: number } {
+  const inicio = calcularDataPagamento(ano, mes, diaConfigurado);
+
+  const anoProximoPagamento = mes === 11 ? ano + 1 : ano;
+  const mesProximoPagamento = mes === 11 ? 0 : mes + 1;
+  const proximoPagamento = calcularDataPagamento(
+    anoProximoPagamento,
+    mesProximoPagamento,
+    diaConfigurado,
+  );
+
+  const fim = adicionarDias(proximoPagamento, -1);
+
+  const umDiaEmMillissegundos = 1000 * 60 * 60 * 24;
+  const totalDias =
+    Math.round((fim.getTime() - inicio.getTime()) / umDiaEmMillissegundos) + 1;
+
+  return { inicio, fim, totalDias };
+}
