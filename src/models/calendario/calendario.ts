@@ -92,27 +92,44 @@ export function proximoDiaUtil(data: Date): Date {
   return candidato;
 }
 
+export function diaUtilAnterior(data: Date): Date {
+  let candidato = new Date(data);
+
+  while (!isDiaUtil(candidato)) {
+    candidato = adicionarDias(candidato, -1);
+  }
+
+  return candidato;
+}
+
 function ultimoDiaDoMes(ano: number, mes: number): number {
   return new Date(ano, mes + 1, 0).getDate();
 }
+
+type EstrategiaAjusteDiaUtil = "antecipar" | "postergar";
 
 export function calcularDataPagamento(
   ano: number,
   mes: number,
   diaConfigurado: number,
+  estrategia: EstrategiaAjusteDiaUtil,
 ): Date {
   const ultimoDia = ultimoDiaDoMes(ano, mes);
   const diaAjustado = Math.min(diaConfigurado, ultimoDia);
   const dataBase = new Date(ano, mes, diaAjustado);
-  return proximoDiaUtil(dataBase);
+
+  return estrategia === "antecipar"
+    ? diaUtilAnterior(dataBase)
+    : proximoDiaUtil(dataBase);
 }
 
 export function calcularPeriodoFinanceiro(
   ano: number,
   mes: number,
   diaConfigurado: number,
+  estrategia: EstrategiaAjusteDiaUtil,
 ): { inicio: Date; fim: Date; totalDias: number } {
-  const inicio = calcularDataPagamento(ano, mes, diaConfigurado);
+  const inicio = calcularDataPagamento(ano, mes, diaConfigurado, estrategia);
 
   const anoProximoPagamento = mes === 11 ? ano + 1 : ano;
   const mesProximoPagamento = mes === 11 ? 0 : mes + 1;
@@ -120,6 +137,7 @@ export function calcularPeriodoFinanceiro(
     anoProximoPagamento,
     mesProximoPagamento,
     diaConfigurado,
+    estrategia,
   );
 
   const fim = adicionarDias(proximoPagamento, -1);

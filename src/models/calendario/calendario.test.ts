@@ -3,6 +3,7 @@ import {
   calcularPascoa,
   isDiaUtil,
   proximoDiaUtil,
+  diaUtilAnterior,
   calcularDataPagamento,
   calcularPeriodoFinanceiro,
 } from "./calendario";
@@ -53,7 +54,7 @@ describe("calcularPascoa", () => {
 describe("isDiaUtil", () => {
   it("considera um sábado como não-útil", () => {
     // 3 de janeiro de 2026 é um sábado
-    expect(isDiaUtil(new Date(2026, 0, 4))).toBe(false);
+    expect(isDiaUtil(new Date(2026, 0, 3))).toBe(false);
   });
 
   it("considera um domingo como não-útil", () => {
@@ -98,34 +99,56 @@ describe("proximoDiaUtil", () => {
   });
 });
 
+describe("diaUtilAnterior", () => {
+  it("retorna a própria data se já for um dia útil", () => {
+    const resultado = diaUtilAnterior(new Date(2026, 0, 5));
+    expect(resultado.getDate()).toBe(5);
+    expect(resultado.getMonth()).toBe(0);
+  });
+
+  it("retrocede do domingo para a sexta-feira anterior", () => {
+    // 4 de janeiro de 2026 é domingo -> deve retornar 2 de janeiro (sexta)
+    const resultado = diaUtilAnterior(new Date(2026, 0, 4));
+    expect(resultado.getDate()).toBe(2);
+    expect(resultado.getMonth()).toBe(0);
+  });
+
+  it("retrocede do feriado de Finados (segunda em 2026) para a sexta-feira anterior", () => {
+    // Finados 2026 (2/nov) é segunda-feira -> deve voltar pra sexta, 30/10
+    const resultado = diaUtilAnterior(new Date(2026, 10, 2));
+    expect(resultado.getDate()).toBe(30);
+    expect(resultado.getMonth()).toBe(9);
+  });
+});
+
 describe("calcularDataPagamento", () => {
-  it("retorna o próprio dia configurado se ele já for útil", () => {
+  it("retorna o próprio dia configurado se ele já for útil (postergar)", () => {
     // dia 5 configurado, outubro de 2026 -> 5 de outubro é uma segunda-feira comum
-    const pagamento = calcularDataPagamento(2026, 9, 5);
+    const pagamento = calcularDataPagamento(2026, 9, 5, "postergar");
     expect(pagamento.getDate()).toBe(5);
     expect(pagamento.getMonth()).toBe(9);
   });
 
-  it("empurra o pagamento quando o dia configurado cai num sábado seguido de feriado", () => {
+  it("empurra o pagamento quando o dia configurado cai num sábado seguido de feriado (postergar)", () => {
     // dia 31 configurado, outubro de 2026:
     // 31/out = sábado, 1/nov = domingo, 2/nov = feriado (Finados) -> pagamento cai em 3/nov
-    const pagamento = calcularDataPagamento(2026, 9, 31);
+    const pagamento = calcularDataPagamento(2026, 9, 31, "postergar");
     expect(pagamento.getDate()).toBe(3);
     expect(pagamento.getMonth()).toBe(10);
   });
 
-  it("usa o último dia do mês quando o dia configurado não existe", () => {
+  it("usa o último dia do mês quando o dia configurado não existe (postergar)", () => {
     // dia 31 configurado, fevereiro de 2026 ( não é bissexto, só tem 28 dias)
     // deve cair em 28/02/2026, que já é uma segunda-feira útil
-    const pagamento = calcularDataPagamento(2026, 1, 31);
+    const pagamento = calcularDataPagamento(2026, 1, 31, "postergar");
     expect(pagamento.getDate()).toBe(2);
     expect(pagamento.getMonth()).toBe(2);
   });
 
   describe("calcularPeriodoFinanceiro", () => {
-    it("calcula um período simples de 30 dias sem ajustes de fim de semana/feriado", () => {
+    it("calcula um período simples de 30 dias sem ajustes de fim de semana/feriado (postergar)", () => {
       // dia 8 configurado: 08/09/2026 (terça) até 07/10/2026 (quarta) = 30 dias
-      const periodo = calcularPeriodoFinanceiro(2026, 8, 8);
+      const periodo = calcularPeriodoFinanceiro(2026, 8, 8, "postergar");
       expect(periodo.inicio.getDate()).toBe(8);
       expect(periodo.inicio.getMonth()).toBe(8); // setembro
       expect(periodo.fim.getDate()).toBe(7);
@@ -133,10 +156,10 @@ describe("calcularDataPagamento", () => {
       expect(periodo.totalDias).toBe(30);
     });
 
-    it("calcula o período de outubro/2026 considerando sábado, domingo e feriado de Finados", () => {
+    it("calcula o período de outubro/2026 considerando sábado, domingo e feriado de Finados (postergar)", () => {
       // dia 31 configurado: pagamento de outubro cai em 03/11 (feriado empurra de 31/out)
       // pagamento de novembro cai em 30/11 -> fim do periodo = 29/11
-      const periodo = calcularPeriodoFinanceiro(2026, 9, 31);
+      const periodo = calcularPeriodoFinanceiro(2026, 9, 31, "postergar");
       expect(periodo.inicio.getDate()).toBe(3);
       expect(periodo.inicio.getMonth()).toBe(10); // novembro
       expect(periodo.fim.getDate()).toBe(29);
