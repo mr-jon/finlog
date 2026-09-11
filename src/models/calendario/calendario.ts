@@ -106,7 +106,7 @@ function ultimoDiaDoMes(ano: number, mes: number): number {
   return new Date(ano, mes + 1, 0).getDate();
 }
 
-type EstrategiaAjusteDiaUtil = "antecipar" | "postergar";
+export type EstrategiaAjusteDiaUtil = "antecipar" | "postergar";
 
 export function calcularDataPagamento(
   ano: number,
