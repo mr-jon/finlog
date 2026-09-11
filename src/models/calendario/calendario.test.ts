@@ -144,6 +144,14 @@ describe("calcularDataPagamento", () => {
     expect(pagamento.getDate()).toBe(2);
     expect(pagamento.getMonth()).toBe(2);
   });
+
+  it("antecipa o pagamento quando o dia configurado cai num sábado seguido de feriado (antecipar)", () => {
+    // dia 31 configurado, outubro de 2026:
+    // 31/out = sábado -> antecipar deve voltar pro dia útil anterior, 30/out (sexta)
+    const pagamento = calcularDataPagamento(2026, 9, 31, "antecipar");
+    expect(pagamento.getDate()).toBe(30);
+    expect(pagamento.getMonth()).toBe(9);
+  });
 });
 
 describe("calcularPeriodoFinanceiro", () => {
