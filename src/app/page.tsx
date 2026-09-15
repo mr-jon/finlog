@@ -7,11 +7,33 @@ type Resultado = {
   mediaDiaria: number;
 };
 
+const MESES = [
+  "Janeiro",
+  "Fevereiro",
+  "Março",
+  "Abril",
+  "Maio",
+  "Junho",
+  "Julho",
+  "Agosto",
+  "Setembro",
+  "Outubro",
+  "Novembro",
+  "Dezembro",
+];
+
+const EXPLICACAO_ESTRATEGIA: Record<string, string> = {
+  postergar:
+    "Postergar indica que o dia do seu recebimento será adiado, em caso de finais de semana ou feriados, para o próximo dia útil.",
+  antecipar:
+    "Antecipar indica que o dia do seu recebimento será antecipado, em caso de finais de semana ou feriados, para o dia útil anterior.",
+};
+
 export default function Home() {
-  const [orcamentoMensal, setOrcamentoMensal] = useState("3000");
-  const [ano, setAno] = useState("2026");
-  const [mes, setMes] = useState("9");
-  const [diaConfigurado, setDiaConfigurado] = useState("31");
+  const [orcamentoMensal, setOrcamentoMensal] = useState("");
+  const [ano, setAno] = useState("");
+  const [mes, setMes] = useState("");
+  const [diaConfigurado, setDiaConfigurado] = useState("");
   const [estrategia, setEstrategia] = useState("postergar");
 
   const [resultado, setResultado] = useState<Resultado | null>(null);
@@ -53,12 +75,15 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-6">
       <div className="w-full max-w-md">
-        <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100 mb-1">
-          finlog
-        </h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-          Descubra quanto você pode gastar por dia sem estourar o orçamento.
-        </p>
+        <div className="mb-8 text-center">
+          <h1 className="text-4xl font-bold text-slate-900 dark:text-slate-100 mb-2">
+            finlog
+          </h1>
+          <p className="text-base text-slate-600 dark:text-slate-400">
+            Descubra quanto você pode gastar por dia sem estourar o orçamento,
+            considerando seu ciclo real de pagamento.
+          </p>
+        </div>
 
         <form
           onSubmit={handleSubmit}
@@ -71,7 +96,8 @@ export default function Home() {
             <input
               value={orcamentoMensal}
               onChange={(e) => setOrcamentoMensal(e.target.value)}
-              className="w-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-md px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-500"
+              placeholder="Ex.: 3000"
+              className="w-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-md px-3 py-2 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-500"
             />
           </div>
 
@@ -83,18 +109,28 @@ export default function Home() {
               <input
                 value={ano}
                 onChange={(e) => setAno(e.target.value)}
-                className="w-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-md px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-500"
+                placeholder="Ex.: 2026"
+                className="w-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-md px-3 py-2 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-500"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Mês (0-11)
+                Mês
               </label>
-              <input
+              <select
                 value={mes}
                 onChange={(e) => setMes(e.target.value)}
                 className="w-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-md px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-500"
-              />
+              >
+                <option value="" disabled>
+                  Selecione
+                </option>
+                {MESES.map((nomeMes, indice) => (
+                  <option key={nomeMes} value={indice}>
+                    {nomeMes}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -105,7 +141,8 @@ export default function Home() {
             <input
               value={diaConfigurado}
               onChange={(e) => setDiaConfigurado(e.target.value)}
-              className="w-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-md px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-500"
+              placeholder="Ex.: 5"
+              className="w-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-md px-3 py-2 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-500"
             />
           </div>
 
@@ -118,9 +155,12 @@ export default function Home() {
               onChange={(e) => setEstrategia(e.target.value)}
               className="w-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-md px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-500"
             >
-              <option value="postergar">Postergar (boletos)</option>
-              <option value="antecipar">Antecipar (salário)</option>
+              <option value="postergar">Postergar</option>
+              <option value="antecipar">Antecipar</option>
             </select>
+            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+              {EXPLICACAO_ESTRATEGIA[estrategia]}
+            </p>
           </div>
 
           <button
