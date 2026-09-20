@@ -73,13 +73,10 @@ export function calcularPascoa(ano: number): Date {
 }
 
 export function isDiaUtil(data: Date): boolean {
-  const diaDaSemana = data.getDay(); // 0 = domingo, 6 = sábado
-  const ehFimDeSemana = diaDaSemana === 0 || diaDaSemana === 6;
-
-  if (ehFimDeSemana) return false;
-  if (isFeriadoNacional(data)) return false;
-
-  return true;
+  return diaEhValido(data, {
+    considerarFinsDeSemana: true,
+    considerarFeriados: true,
+  });
 }
 
 export function proximoDiaUtil(data: Date): Date {
@@ -147,4 +144,45 @@ export function calcularPeriodoFinanceiro(
     Math.round((fim.getTime() - inicio.getTime()) / umDiaEmMillissegundos) + 1;
 
   return { inicio, fim, totalDias };
+}
+
+type OpcoesValidacaoDia = {
+  considerarFinsDeSemana: boolean;
+  considerarFeriados: boolean;
+};
+
+export function diaEhValido(data: Date, opcoes: OpcoesValidacaoDia): boolean {
+  const diaDaSemana = data.getDay();
+  const ehFimDeSemana = diaDaSemana === 0 || diaDaSemana === 6;
+
+  if (opcoes.considerarFinsDeSemana && ehFimDeSemana) return false;
+  if (opcoes.considerarFeriados && isFeriadoNacional(data)) return false;
+
+  return true;
+}
+
+export function proximaDataValida(
+  data: Date,
+  opcoes: OpcoesValidacaoDia,
+): Date {
+  let candidato = new Date(data);
+
+  while (!diaEhValido(candidato, opcoes)) {
+    candidato = adicionarDias(candidato, 1);
+  }
+
+  return candidato;
+}
+
+export function dataValidaAnterior(
+  data: Date,
+  opcoes: OpcoesValidacaoDia,
+): Date {
+  let candidato = new Date(data);
+
+  while (!diaEhValido(candidato, opcoes)) {
+    candidato = adicionarDias(candidato, -1);
+  }
+
+  return candidato;
 }

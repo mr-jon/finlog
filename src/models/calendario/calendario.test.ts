@@ -6,6 +6,9 @@ import {
   diaUtilAnterior,
   calcularDataPagamento,
   calcularPeriodoFinanceiro,
+  diaEhValido,
+  proximaDataValida,
+  dataValidaAnterior,
 } from "./calendario";
 
 describe("isFeriadoNacional", () => {
@@ -174,5 +177,56 @@ describe("calcularPeriodoFinanceiro", () => {
     expect(periodo.fim.getDate()).toBe(29);
     expect(periodo.fim.getMonth()).toBe(10); // novembro
     expect(periodo.totalDias).toBe(27);
+  });
+});
+
+describe("diaEhValido", () => {
+  it("considera qualquer dia válido quando nenhum fator é considerado (dias corridos)", () => {
+    // 3 de janeiro de 2026 é sábado, e Ano Novo (1 de janeiiro) é feriado
+    // nenhum dos dois é considerado aqui
+    const opcoes = { considerarFinsDeSemana: false, considerarFeriados: false };
+    expect(diaEhValido(new Date(2026, 0, 3), opcoes)).toBe(true);
+    expect(diaEhValido(new Date(2026, 0, 1), opcoes)).toBe(true);
+  });
+
+  it("invalida fim de semana quando considerarFinsDeSemana é true, mas ignora feriado", () => {
+    const opcoes = { considerarFinsDeSemana: true, considerarFeriados: false };
+    expect(diaEhValido(new Date(2026, 0, 3), opcoes)).toBe(false); // sábado
+    expect(diaEhValido(new Date(2026, 0, 1), opcoes)).toBe(true); // feriado numa quinta, mas feriado é ignorado
+  });
+
+  it("invalida feriado quando considerarFeriados é true, mas ignora fim de semana", () => {
+    const opcoes = { considerarFinsDeSemana: false, considerarFeriados: true };
+    expect(diaEhValido(new Date(2026, 0, 1), opcoes)).toBe(false); // feriado
+    expect(diaEhValido(new Date(2026, 0, 3), opcoes)).toBe(true); // sábado, mas fim de semana é ignorado
+  });
+
+  it("invalida os dois quando ambos são considerados (equivalente a isDiaUtil)", () => {
+    const opcoes = { considerarFinsDeSemana: true, considerarFeriados: true };
+    expect(diaEhValido(new Date(2026, 0, 3), opcoes)).toBe(false); // sábado
+    expect(diaEhValido(new Date(2026, 0, 1), opcoes)).toBe(false); // feriado
+    expect(diaEhValido(new Date(2026, 0, 5), opcoes)).toBe(true); // segunda comum
+  });
+});
+
+describe("proximaDataValida", () => {
+  it("avança do sábado até a próxima segunda quando os dois fatores são considerados", () => {
+    const opcoes = { considerarFinsDeSemana: true, considerarFeriados: true };
+    const resultado = proximaDataValida(new Date(2026, 0, 3), opcoes);
+    expect(resultado.getDate()).toBe(5);
+  });
+
+  it("não avança quando nenhum fator é considerado (dias corridos)", () => {
+    const opcoes = { considerarFinsDeSemana: false, considerarFeriados: false };
+    const resultado = proximaDataValida(new Date(2026, 0, 3), opcoes);
+    expect(resultado.getDate()).toBe(3);
+  });
+});
+
+describe("dataValidaAnterior", () => {
+  it("retrocede do domingo até a sexta anterior quando os dois fatores são considerados", () => {
+    const opcoes = { considerarFinsDeSemana: true, considerarFeriados: true };
+    const resultado = dataValidaAnterior(new Date(2026, 0, 4), opcoes);
+    expect(resultado.getDate()).toBe(2);
   });
 });
