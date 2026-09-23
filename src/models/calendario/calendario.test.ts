@@ -9,6 +9,7 @@ import {
   diaEhValido,
   proximaDataValida,
   dataValidaAnterior,
+  calcularFimSugerido,
 } from "./calendario";
 
 describe("isFeriadoNacional", () => {
@@ -228,5 +229,58 @@ describe("dataValidaAnterior", () => {
     const opcoes = { considerarFinsDeSemana: true, considerarFeriados: true };
     const resultado = dataValidaAnterior(new Date(2026, 0, 4), opcoes);
     expect(resultado.getDate()).toBe(2);
+  });
+});
+
+describe("calcularFimSugerido", () => {
+  it("sugere o mesmo dia do mês seguinte quando não há ajuste (dias corridos)", () => {
+    const opcoes = {
+      considerarFinsDeSemana: false,
+      considerarFeriados: false,
+      estrategia: "postergar" as const,
+    };
+
+    const resultado = calcularFimSugerido(new Date(2026, 9, 1), opcoes);
+
+    expect(resultado.inicioAjustado.getDate()).toBe(1);
+    expect(resultado.inicioAjustado.getMonth()).toBe(9);
+    expect(resultado.fimSugerido.getDate()).toBe(1);
+    expect(resultado.fimSugerido.getMonth()).toBe(10); // novembro
+  });
+
+  it("posterga transbordando pro mês seguinte quando o dia não existe (postergar)", () => {
+    // início bruto: 31/10/2026 (sábado) -> ajusta pra 03/11 (feriado empurra)
+    // fim bruto (mesmo dia, mês seguinte): 31/11 não existe em novembro -> transborda pra  01/12 (mês tem 30 dias)
+    // 01/12/2026 é terça-feira, sem feriado -> não precisa de mais ajuste
+    const opcoes = {
+      considerarFinsDeSemana: true,
+      considerarFeriados: true,
+      estrategia: "postergar" as const,
+    };
+
+    const resultado = calcularFimSugerido(new Date(2026, 9, 31), opcoes);
+
+    expect(resultado.inicioAjustado.getDate()).toBe(3);
+    expect(resultado.inicioAjustado.getMonth()).toBe(10); // novembro
+    expect(resultado.fimSugerido.getDate()).toBe(1);
+    expect(resultado.fimSugerido.getMonth()).toBe(11); // dezembro
+  });
+
+  it("antecipa fazendo clamping pro último dia do mês quando o dia não existe (antecipar)", () => {
+    // início bruto: 31/10/2026 (sábado) -> antecipar retrocede pra 30/10 (sexta)
+    // fim bruto: (mesmo dia, mês seguinte): dia 31 não existe em novembro -> clampa pro dia 30
+    // 30/11/2026 é segunda-feira, sem feriado -> não precisa de mais ajuste
+    const opcoes = {
+      considerarFinsDeSemana: true,
+      considerarFeriados: true,
+      estrategia: "antecipar" as const,
+    };
+
+    const resultado = calcularFimSugerido(new Date(2026, 9, 31), opcoes);
+
+    expect(resultado.inicioAjustado.getDate()).toBe(30);
+    expect(resultado.inicioAjustado.getMonth()).toBe(9); // outubro
+    expect(resultado.fimSugerido.getDate()).toBe(30);
+    expect(resultado.fimSugerido.getMonth()).toBe(10); // novembro
   });
 });

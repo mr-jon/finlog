@@ -186,3 +186,46 @@ export function dataValidaAnterior(
 
   return candidato;
 }
+
+function calcularDataMesmoDiaProximoMes(
+  dataBruta: Date,
+  estrategia: EstrategiaAjusteDiaUtil,
+): Date {
+  const diaOriginal = dataBruta.getDate();
+  const anoSeguinte =
+    dataBruta.getMonth() === 11
+      ? dataBruta.getFullYear() + 1
+      : dataBruta.getFullYear();
+  const mesSeguinte =
+    dataBruta.getMonth() === 11 ? 0 : dataBruta.getMonth() + 1;
+
+  if (estrategia === "antecipar") {
+    const ultimoDia = ultimoDiaDoMes(anoSeguinte, mesSeguinte);
+    const diaAjustado = Math.min(diaOriginal, ultimoDia);
+    return new Date(anoSeguinte, mesSeguinte, diaAjustado);
+  }
+
+  // postergar: deixa o próprio Javascript "transbordar" pro mês seguinte quando o dia não existe
+  return new Date(anoSeguinte, mesSeguinte, diaOriginal);
+}
+
+type OpcoesCalculoPeriodo = OpcoesValidacaoDia & {
+  estrategia: EstrategiaAjusteDiaUtil;
+};
+
+export function calcularFimSugerido(
+  inicioBruto: Date,
+  opcoes: OpcoesCalculoPeriodo,
+): { inicioAjustado: Date; fimSugerido: Date } {
+  const ajustar =
+    opcoes.estrategia === "antecipar" ? dataValidaAnterior : proximaDataValida;
+
+  const inicioAjustado = ajustar(inicioBruto, opcoes);
+  const fimBruto = calcularDataMesmoDiaProximoMes(
+    inicioBruto,
+    opcoes.estrategia,
+  );
+  const fimSugerido = ajustar(fimBruto, opcoes);
+
+  return { inicioAjustado, fimSugerido };
+}
