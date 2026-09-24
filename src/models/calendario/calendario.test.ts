@@ -159,24 +159,19 @@ describe("calcularDataPagamento", () => {
 });
 
 describe("calcularPeriodoFinanceiro", () => {
-  it("calcula um período simples de 30 dias sem ajustes de fim de semana/feriado (postergar)", () => {
-    // dia 8 configurado: 08/09/2026 (terça) até 07/10/2026 (quarta) = 30 dias
-    const periodo = calcularPeriodoFinanceiro(2026, 8, 8, "postergar");
-    expect(periodo.inicio.getDate()).toBe(8);
-    expect(periodo.inicio.getMonth()).toBe(8); // setembro
-    expect(periodo.fim.getDate()).toBe(7);
-    expect(periodo.fim.getMonth()).toBe(9); // outubro
+  it("empacota início, fim e total de dias entre dias datas já ajustadas", () => {
+    const periodo = calcularPeriodoFinanceiro(
+      new Date(2026, 8, 8),
+      new Date(2026, 9, 7),
+    );
     expect(periodo.totalDias).toBe(30);
   });
 
-  it("calcula o período de outubro/2026 considerando sábado, domingo e feriado de Finados (postergar)", () => {
-    // dia 31 configurado: pagamento de outubro cai em 03/11 (feriado empurra de 31/out)
-    // pagamento de novembro cai em 30/11 -> fim do periodo = 29/11
-    const periodo = calcularPeriodoFinanceiro(2026, 9, 31, "postergar");
-    expect(periodo.inicio.getDate()).toBe(3);
-    expect(periodo.inicio.getMonth()).toBe(10); // novembro
-    expect(periodo.fim.getDate()).toBe(29);
-    expect(periodo.fim.getMonth()).toBe(10); // novembro
+  it("conta corretamente um periodo que atravessa o feriado de Finados", () => {
+    const periodo = calcularPeriodoFinanceiro(
+      new Date(2026, 10, 3),
+      new Date(2026, 10, 29),
+    );
     expect(periodo.totalDias).toBe(27);
   });
 });

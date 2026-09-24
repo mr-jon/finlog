@@ -9,7 +9,7 @@ const FERIADOS_FIXOS: Array<{ mes: number; dia: number }> = [
   { mes: 11, dia: 25 }, // Natal
 ];
 
-function adicionarDias(data: Date, dias: number): Date {
+export function adicionarDias(data: Date, dias: number): Date {
   const resultado = new Date(data);
   resultado.setDate(resultado.getDate() + dias);
   return resultado;
@@ -121,29 +121,17 @@ export function calcularDataPagamento(
 }
 
 export function calcularPeriodoFinanceiro(
-  ano: number,
-  mes: number,
-  diaConfigurado: number,
-  estrategia: EstrategiaAjusteDiaUtil,
+  inicio: Date,
+  fim: Date,
 ): { inicio: Date; fim: Date; totalDias: number } {
-  const inicio = calcularDataPagamento(ano, mes, diaConfigurado, estrategia);
+  return { inicio, fim, totalDias: contarDiasEntre(inicio, fim) };
+}
 
-  const anoProximoPagamento = mes === 11 ? ano + 1 : ano;
-  const mesProximoPagamento = mes === 11 ? 0 : mes + 1;
-  const proximoPagamento = calcularDataPagamento(
-    anoProximoPagamento,
-    mesProximoPagamento,
-    diaConfigurado,
-    estrategia,
+function contarDiasEntre(inicio: Date, fim: Date): number {
+  const umDiaEmMilissegundos = 1000 * 60 * 60 * 24;
+  return (
+    Math.round((fim.getTime() - inicio.getTime()) / umDiaEmMilissegundos) + 1
   );
-
-  const fim = adicionarDias(proximoPagamento, -1);
-
-  const umDiaEmMillissegundos = 1000 * 60 * 60 * 24;
-  const totalDias =
-    Math.round((fim.getTime() - inicio.getTime()) / umDiaEmMillissegundos) + 1;
-
-  return { inicio, fim, totalDias };
 }
 
 type OpcoesValidacaoDia = {
