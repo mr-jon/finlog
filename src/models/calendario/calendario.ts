@@ -197,7 +197,7 @@ function calcularDataMesmoDiaProximoMes(
   return new Date(anoSeguinte, mesSeguinte, diaOriginal);
 }
 
-type OpcoesCalculoPeriodo = OpcoesValidacaoDia & {
+export type OpcoesCalculoPeriodo = OpcoesValidacaoDia & {
   estrategia: EstrategiaAjusteDiaUtil;
 };
 
