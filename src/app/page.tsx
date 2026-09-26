@@ -2,43 +2,96 @@
 
 import { useState } from "react";
 
+type Estrategia = "antecipar" | "postergar";
+
 type Resultado = {
-  periodo: { inicio: string; fim: string; totalDias: number };
+  inicio: string;
+  fim: string;
+  totalDias: number;
   mediaDiaria: number;
 };
 
-const MESES = [
-  "Janeiro",
-  "Fevereiro",
-  "Março",
-  "Abril",
-  "Maio",
-  "Junho",
-  "Julho",
-  "Agosto",
-  "Setembro",
-  "Outubro",
-  "Novembro",
-  "Dezembro",
-];
+function formatarDataInput(data: Date): string {
+  return data.toISOString().slice(0, 10);
+}
 
-const EXPLICACAO_ESTRATEGIA: Record<string, string> = {
-  postergar:
-    "Postergar indica que o dia do seu recebimento será adiado, em caso de finais de semana ou feriados, para o próximo dia útil.",
-  antecipar:
-    "Antecipar indica que o dia do seu recebimento será antecipado, em caso de finais de semana ou feriados, para o dia útil anterior.",
-};
+function adicionarUmMes(dataISO: string): string {
+  const data = new Date(dataISO + "T00:00:00");
+  data.setMonth(data.getMonth() + 1);
+  return formatarDataInput(data);
+}
+
+function montarRotuloAjuste(
+  considerarFinsDeSemana: boolean,
+  considerarFeriados: boolean,
+): string {
+  if (considerarFinsDeSemana && considerarFeriados) {
+    return "Quando a data cair em final de semana ou feriado:";
+  }
+  if (considerarFinsDeSemana) {
+    return "Quando a data cair em final de semana:";
+  }
+  if (considerarFeriados) {
+    return "Quando a data cair em feriado:";
+  }
+  return "";
+}
+
+function valoresIniciais() {
+  const hoje = formatarDataInput(new Date());
+  return {
+    orcamento: "",
+    inicio: hoje,
+    fim: adicionarUmMes(hoje),
+    considerarFinsDeSemana: false,
+    considerarFeriados: false,
+    estrategia: "postergar" as Estrategia,
+  };
+}
 
 export default function Home() {
-  const [orcamentoMensal, setOrcamentoMensal] = useState("");
-  const [ano, setAno] = useState("");
-  const [mes, setMes] = useState("");
-  const [diaConfigurado, setDiaConfigurado] = useState("");
-  const [estrategia, setEstrategia] = useState("postergar");
+  const [orcamento, setOrcamento] = useState(valoresIniciais().orcamento);
+  const [inicio, setInicio] = useState(valoresIniciais().inicio);
+  const [fim, setFim] = useState(valoresIniciais().fim);
+  const [considerarFinsDeSemana, setConsiderarFinsDeSemana] = useState(false);
+  const [considerarFeriados, setConsiderarFeriados] = useState(false);
+  const [estrategia, setEstrategia] = useState<Estrategia>("postergar");
+  const [fimEditadoManualmente, setFimEditadoManualmente] = useState(false);
 
   const [resultado, setResultado] = useState<Resultado | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(false);
+
+  const algumFatorConsiderado = considerarFinsDeSemana || considerarFeriados;
+
+  function handleInicioChange(novoInicio: string) {
+    setInicio(novoInicio);
+    if (!fimEditadoManualmente && novoInicio) {
+      setFim(adicionarUmMes(novoInicio));
+    }
+  }
+
+  function handleFimChange(novoFim: string) {
+    setFim(novoFim);
+    setFimEditadoManualmente(true);
+  }
+
+  function handleLimpar() {
+    const iniciais = valoresIniciais();
+    setOrcamento(iniciais.orcamento);
+    setInicio(iniciais.inicio);
+    setFim(iniciais.fim);
+    setConsiderarFinsDeSemana(iniciais.considerarFinsDeSemana);
+    setConsiderarFeriados(iniciais.considerarFeriados);
+    setEstrategia(iniciais.estrategia);
+    setFimEditadoManualmente(false);
+    setResultado(null);
+    setErro(null);
+  }
+
+  function paraNumero(valorDigitado: string): number {
+    return Number(valorDigitado.replace(",", "."));
+  }
 
   async function handleSubmit(evento: React.FormEvent) {
     evento.preventDefault();
@@ -47,14 +100,15 @@ export default function Home() {
     setCarregando(true);
 
     try {
-      const resposta = await fetch("/api/v1/planejamento", {
+      const resposta = await fetch("/api/v1/simulacao", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          orcamentoMensal: Number(orcamentoMensal),
-          ano: Number(ano),
-          mes: Number(mes),
-          diaConfigurado: Number(diaConfigurado),
+          orcamento: paraNumero(orcamento),
+          inicioBruto: inicio,
+          fimBruto: fim,
+          considerarFinsDeSemana,
+          considerarFeriados,
           estrategia,
         }),
       });
@@ -75,7 +129,7 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-6">
       <div className="w-full max-w-md">
-        <div className="mb-8 text-center">
+        <div className="mb-8 flex flex-col items-center text-center gap-3">
           <h1 className="text-4xl font-bold text-slate-900 dark:text-slate-100 mb-2">
             finlog
           </h1>
@@ -91,12 +145,13 @@ export default function Home() {
         >
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-              Orçamento mensal (R$)
+              Orçamento (R$)
             </label>
             <input
-              value={orcamentoMensal}
-              onChange={(e) => setOrcamentoMensal(e.target.value)}
+              value={orcamento}
+              onChange={(e) => setOrcamento(e.target.value)}
               placeholder="Ex.: 3000"
+              required
               className="w-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-md px-3 py-2 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-500"
             />
           </div>
@@ -104,72 +159,93 @@ export default function Home() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Ano
+                Início do período
               </label>
               <input
-                value={ano}
-                onChange={(e) => setAno(e.target.value)}
-                placeholder="Ex.: 2026"
-                className="w-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-md px-3 py-2 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-500"
+                type="date"
+                value={inicio}
+                onChange={(e) => handleInicioChange(e.target.value)}
+                required
+                className="w-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-md px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-500"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Mês
+                Fim do período
               </label>
-              <select
-                value={mes}
-                onChange={(e) => setMes(e.target.value)}
+              <input
+                type="date"
+                value={fim}
+                onChange={(e) => handleFimChange(e.target.value)}
+                required
                 className="w-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-md px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-500"
-              >
-                <option value="" disabled>
-                  Selecione
-                </option>
-                {MESES.map((nomeMes, indice) => (
-                  <option key={nomeMes} value={indice}>
-                    {nomeMes}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-              Dia de pagamento configurado
+          <div className="flex gap-4">
+            <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+              <input
+                type="checkbox"
+                checked={considerarFinsDeSemana}
+                onChange={(e) => setConsiderarFinsDeSemana(e.target.checked)}
+              />
+              Considerar finais de semana
             </label>
-            <input
-              value={diaConfigurado}
-              onChange={(e) => setDiaConfigurado(e.target.value)}
-              placeholder="Ex.: 5"
-              className="w-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-md px-3 py-2 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-500"
-            />
+            <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+              <input
+                type="checkbox"
+                checked={considerarFeriados}
+                onChange={(e) => setConsiderarFeriados(e.target.checked)}
+              />
+              Considerar feriados
+            </label>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-              Estratégia
-            </label>
-            <select
-              value={estrategia}
-              onChange={(e) => setEstrategia(e.target.value)}
-              className="w-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-md px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-500"
+          {algumFatorConsiderado && (
+            <div>
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                {montarRotuloAjuste(considerarFinsDeSemana, considerarFeriados)}
+              </p>
+              <div className="flex flex-col gap-2">
+                <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+                  <input
+                    type="radio"
+                    name="estrategia"
+                    checked={estrategia === "postergar"}
+                    onChange={() => setEstrategia("postergar")}
+                  />
+                  Adiar para a próxima data válida
+                </label>
+                <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+                  <input
+                    type="radio"
+                    name="estrategia"
+                    checked={estrategia === "antecipar"}
+                    onChange={() => setEstrategia("antecipar")}
+                  />
+                  Antecipar para a data válida anterior
+                </label>
+              </div>
+            </div>
+          )}
+
+          <div className="flex gap-3 mt-2">
+            <button
+              type="submit"
+              disabled={carregando}
+              className="flex-1 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-md py-2 font-medium hover:bg-slate-800 dark:hover:bg-slate-300 disabled:opacity-50 transition-colors"
             >
-              <option value="postergar">Postergar</option>
-              <option value="antecipar">Antecipar</option>
-            </select>
-            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-              {EXPLICACAO_ESTRATEGIA[estrategia]}
-            </p>
+              {carregando ? "Calculando..." : "Calcular"}
+            </button>
+            <button
+              type="button"
+              onClick={handleLimpar}
+              className="px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            >
+              Limpar
+            </button>
           </div>
-
-          <button
-            type="submit"
-            disabled={carregando}
-            className="mt-2 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-md py-2 font-medium hover:bg-slate-800 dark:hover:bg-slate-300 disabled:opacity-50 transition-colors"
-          >
-            {carregando ? "Calculando..." : "Calcular"}
-          </button>
         </form>
 
         {erro && (
@@ -181,9 +257,9 @@ export default function Home() {
         {resultado && (
           <div className="mt-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6">
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              {new Date(resultado.periodo.inicio).toLocaleDateString("pt-BR")}{" "}
-              até {new Date(resultado.periodo.fim).toLocaleDateString("pt-BR")}{" "}
-              · {resultado.periodo.totalDias} dias
+              {new Date(resultado.inicio).toLocaleDateString("pt-BR")} até{" "}
+              {new Date(resultado.fim).toLocaleDateString("pt-BR")} ·{" "}
+              {resultado.totalDias} dias
             </p>
             <p className="mt-3 text-3xl font-semibold text-slate-900 dark:text-slate-100">
               {resultado.mediaDiaria.toLocaleString("pt-BR", {

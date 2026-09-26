@@ -10,7 +10,12 @@ describe("calcularSimulacao", () => {
       estrategia: "postergar" as const,
     };
 
-    const resultado = calcularSimulacao(3200, new Date(2026, 9, 1), opcoes);
+    const resultado = calcularSimulacao(
+      3200,
+      new Date(2026, 9, 1),
+      new Date(2026, 10, 1),
+      opcoes,
+    );
 
     expect(resultado.inicio.getDate()).toBe(1);
     expect(resultado.inicio.getMonth()).toBe(9);
@@ -31,7 +36,12 @@ describe("calcularSimulacao", () => {
       estrategia: "postergar" as const,
     };
 
-    const resultado = calcularSimulacao(2900, new Date(2026, 9, 31), opcoes);
+    const resultado = calcularSimulacao(
+      2900,
+      new Date(2026, 9, 31),
+      new Date(2026, 11, 1),
+      opcoes,
+    );
 
     expect(resultado.inicio.getDate()).toBe(3);
     expect(resultado.inicio.getMonth()).toBe(10);
@@ -39,5 +49,57 @@ describe("calcularSimulacao", () => {
     expect(resultado.fim.getMonth()).toBe(11);
     expect(resultado.totalDias).toBe(29);
     expect(resultado.mediaDiaria).toBe(100);
+  });
+});
+
+describe("calcularSimulacao — validações", () => {
+  const opcoesValidas = {
+    considerarFinsDeSemana: false,
+    considerarFeriados: false,
+    estrategia: "postergar" as const,
+  };
+
+  it("lança erro quando o orçamento não é um número válido maior que zero", () => {
+    expect(() =>
+      calcularSimulacao(
+        NaN,
+        new Date(2026, 9, 1),
+        new Date(2026, 10, 1),
+        opcoesValidas,
+      ),
+    ).toThrow();
+
+    expect(() =>
+      calcularSimulacao(
+        0,
+        new Date(2026, 9, 1),
+        new Date(2026, 10, 1),
+        opcoesValidas,
+      ),
+    ).toThrow();
+  });
+
+  it("lança erro quando a data de início é inválida", () => {
+    const dataInvalida = new Date("");
+    expect(() =>
+      calcularSimulacao(
+        3000,
+        dataInvalida,
+        new Date(2026, 10, 1),
+        opcoesValidas,
+      ),
+    ).toThrow();
+  });
+
+  it("lança erro quando a data de fim é inválida", () => {
+    const dataInvalida = new Date("");
+    expect(() =>
+      calcularSimulacao(
+        3000,
+        new Date(2026, 9, 1),
+        dataInvalida,
+        opcoesValidas,
+      ),
+    ).toThrow();
   });
 });
